@@ -43,6 +43,7 @@ export class VrPanel {
   private propertyRows: PropertyRow[] | null = null;
   private propScroll = 0;
   private hover: { x: number; y: number } | null = null;
+  private hoverRegion = -1;
 
   constructor(manager: ModelManager, storeys: StoreyFilter, cb: PanelCallbacks) {
     this.manager = manager;
@@ -96,17 +97,25 @@ export class VrPanel {
   }
 
   setHover(px: { x: number; y: number } | null): void {
-    const changed =
-      (px === null) !== (this.hover === null) ||
-      (px && this.hover && (Math.abs(px.x - this.hover.x) > 4 || Math.abs(px.y - this.hover.y) > 4));
     this.hover = px;
-    if (changed) this.draw();
+    // Nur neu zeichnen, wenn sich der markierte BEREICH ändert – jedes
+    // draw() lädt die komplette Canvas-Textur zur GPU hoch (~5 MB), das
+    // pro Frame zu tun bricht die Bildrate auf der Quest ein.
+    const idx = px ? this.regions.findIndex((r) => this.contains(r, px)) : -1;
+    if (idx !== this.hoverRegion) {
+      this.hoverRegion = idx;
+      this.draw();
+    }
+  }
+
+  private contains(r: HitRegion, px: { x: number; y: number }): boolean {
+    return px.x >= r.x && px.x <= r.x + r.w && px.y >= r.y && px.y <= r.y + r.h;
   }
 
   /** true = Klick hat ein Bedienelement getroffen. */
   click(px: { x: number; y: number }): boolean {
     for (const r of this.regions) {
-      if (px.x >= r.x && px.x <= r.x + r.w && px.y >= r.y && px.y <= r.y + r.h) {
+      if (this.contains(r, px)) {
         r.action();
         this.draw();
         return true;

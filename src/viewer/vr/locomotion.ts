@@ -18,6 +18,7 @@ interface ControllerSlot {
 export class VrInput {
   readonly slots: [ControllerSlot, ControllerSlot];
   private readonly prev = new Map<string, boolean>();
+  private readonly connectListeners = new Set<() => void>();
 
   constructor(renderer: THREE.WebGLRenderer, rig: THREE.Group) {
     const factory = new XRControllerModelFactory();
@@ -31,6 +32,7 @@ export class VrInput {
         const source = e.data as XRInputSource | undefined;
         slot.hand = (source?.handedness as Hand) ?? null;
         slot.gamepad = source?.gamepad ?? null;
+        for (const l of this.connectListeners) l();
       });
       ray.addEventListener("disconnected", () => {
         slot.hand = null;
@@ -39,6 +41,15 @@ export class VrInput {
       return slot;
     };
     this.slots = [make(0), make(1)];
+  }
+
+  /**
+   * Wird aufgerufen, sobald ein Controller seine Händigkeit meldet – das
+   * passiert erst NACH Sitzungsbeginn (und erneut nach Standby). Erst dann
+   * dürfen handspezifische Objekte (Menü links, Laser rechts) angebracht werden.
+   */
+  onConnected(listener: () => void): void {
+    this.connectListeners.add(listener);
   }
 
   controller(hand: Hand): ControllerSlot | null {

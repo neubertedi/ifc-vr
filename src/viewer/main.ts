@@ -208,6 +208,29 @@ async function startVr(): Promise<void> {
   }
 }
 
+/**
+ * Menü an die LINKE, Laser an die RECHTE Hand hängen – erst möglich, sobald
+ * die Controller ihre Händigkeit gemeldet haben (nach Sitzungsbeginn).
+ * Wird bei jedem Connect erneut ausgeführt (z. B. nach Controller-Standby);
+ * landet das Menü sonst an der Zeigehand, ist es nicht mehr bedienbar.
+ */
+function attachHandAccessories(): void {
+  const left = input.controller("left");
+  if (left && panel.mesh.parent !== left.grip) {
+    panel.attachTo(left.grip);
+    panel.mesh.visible = true;
+  }
+  const right = input.controller("right");
+  if (right && laser.parent !== right.ray) {
+    right.ray.add(laser);
+    laser.visible = true;
+  }
+}
+
+input.onConnected(() => {
+  if (renderer.xr.isPresenting) attachHandAccessories();
+});
+
 renderer.xr.addEventListener("sessionstart", () => {
   ui.setSidebarVisible(false);
 
@@ -228,19 +251,14 @@ renderer.xr.addEventListener("sessionstart", () => {
     rig.rotation.set(0, 0, 0);
   }
 
-  const left = input.controller("left") ?? input.slots[0];
-  panel.attachTo(left.grip);
-  panel.mesh.visible = true;
-
-  const right = input.controller("right") ?? input.slots[1];
-  right.ray.add(laser);
-  laser.visible = true;
+  attachHandAccessories();
 });
 
 renderer.xr.addEventListener("sessionend", () => {
   ui.setSidebarVisible(true);
   host.setXrViewSize(null);
   laser.visible = false;
+  panel.mesh.visible = false;
   rig.position.set(0, 0, 0);
   rig.rotation.set(0, 0, 0);
   controls.frameBox(modelsBox());
