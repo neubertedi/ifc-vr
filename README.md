@@ -34,6 +34,7 @@ nichts wird hochgeladen.
 | Schnitt | Werkzeug „Schnitt" → auf eine Fläche klicken; Mausrad verschiebt die Ebene (Umschalt = fein), „Umkehren"/„Schnitt aus" darunter |
 | Drehpunkt | Angeklickter Punkt wird automatisch neues Orbit-Zentrum |
 | Geschosse/Teilmodelle | Häkchen in der Seitenleiste |
+| Detailstufe | Hoch/Mittel/Niedrig – Abwägung Vollständigkeit ↔ Bildrate (gilt auch in VR, Einstellung wird pro Gerät gespeichert; auch im VR-Menü umschaltbar) |
 
 ### VR (Meta Quest 3)
 

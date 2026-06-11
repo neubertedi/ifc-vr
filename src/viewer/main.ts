@@ -45,6 +45,11 @@ const ui = new DesktopUI(manager, storeys, projects, {
   onClipOff: () => clipping.setEnabled(false),
   onMeasureClear: () => measure.clear(),
   onStartVr: () => void startVr(),
+  onDetail: (level) => {
+    host.setDetail(level);
+    panel.draw();
+  },
+  getDetail: () => host.detail,
 });
 
 selection.onChange((rows) => {
@@ -158,6 +163,11 @@ const panel = new VrPanel(manager, storeys, {
   onClipOff: () => clipping.setEnabled(false),
   onMeasureClear: () => measure.clear(),
   getTool: () => tool,
+  onDetail: (level) => {
+    host.setDetail(level);
+    ui.renderDetail();
+  },
+  getDetail: () => host.detail,
 });
 
 const locomotion = new Locomotion(rig, camera, input, scene, async () => {
@@ -199,6 +209,15 @@ async function startVr(): Promise<void> {
 renderer.xr.addEventListener("sessionstart", () => {
   ui.setSidebarVisible(false);
 
+  // Der Engine die echte VR-Framebuffer-Größe melden (Detailstufen-Wahl);
+  // Fallback 2064 px ≈ Quest-3-Auge, falls der Layer noch nicht bereit ist.
+  const session = renderer.xr.getSession();
+  const layer = session?.renderState.baseLayer;
+  const eyeSize = layer
+    ? Math.max(Math.round(layer.framebufferWidth / 2), layer.framebufferHeight)
+    : 2064;
+  host.setXrViewSize(eyeSize);
+
   // Nutzer vor das Modell stellen (Rig-Ursprung = Fußboden bei local-floor)
   const box = modelsBox();
   if (!box.isEmpty()) {
@@ -218,6 +237,7 @@ renderer.xr.addEventListener("sessionstart", () => {
 
 renderer.xr.addEventListener("sessionend", () => {
   ui.setSidebarVisible(true);
+  host.setXrViewSize(null);
   laser.visible = false;
   rig.position.set(0, 0, 0);
   rig.rotation.set(0, 0, 0);

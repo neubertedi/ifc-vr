@@ -1,3 +1,4 @@
+import type { DetailLevel } from "../core/fragments-setup";
 import type { ModelManager } from "../core/models";
 import type { ProjectManager } from "../core/projects";
 import type { PropertyRow } from "../core/selection";
@@ -8,6 +9,8 @@ export type ToolMode = "select" | "measure" | "clip";
 export interface UiCallbacks {
   onLoadFiles: (files: FileList) => void;
   onProjectOpened?: () => void;
+  onDetail: (level: DetailLevel) => void;
+  getDetail: () => DetailLevel;
   onNavMode: (mode: "orbit" | "ego") => void;
   onToolMode: (mode: ToolMode) => void;
   onClipFlip: () => void;
@@ -85,6 +88,29 @@ export class DesktopUI {
     byId<HTMLButtonElement>("clipOff").addEventListener("click", cb.onClipOff);
     byId<HTMLButtonElement>("measureClear").addEventListener("click", cb.onMeasureClear);
     byId<HTMLButtonElement>("vrBtn").addEventListener("click", cb.onStartVr);
+
+    const detailIds: [string, DetailLevel][] = [
+      ["detailHoch", "hoch"],
+      ["detailMittel", "mittel"],
+      ["detailNiedrig", "niedrig"],
+    ];
+    for (const [id, level] of detailIds) {
+      byId<HTMLButtonElement>(id).addEventListener("click", () => {
+        cb.onDetail(level);
+        this.renderDetail();
+      });
+    }
+    this.renderDetail();
+  }
+
+  renderDetail(): void {
+    const map: Record<DetailLevel, string> = {
+      hoch: "detailHoch",
+      mittel: "detailMittel",
+      niedrig: "detailNiedrig",
+    };
+    for (const id of Object.values(map)) byId(id).classList.remove("active");
+    byId(map[this.cb.getDetail()]).classList.add("active");
   }
 
   setTool(mode: ToolMode): void {

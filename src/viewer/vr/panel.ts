@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import type { DetailLevel } from "../core/fragments-setup";
 import type { ModelManager } from "../core/models";
 import type { PropertyRow } from "../core/selection";
 import type { StoreyFilter, StoreyGroup } from "../core/storeys";
@@ -18,6 +19,8 @@ export interface PanelCallbacks {
   onClipOff: () => void;
   onMeasureClear: () => void;
   getTool: () => ToolMode;
+  onDetail: (level: DetailLevel) => void;
+  getDetail: () => DetailLevel;
 }
 
 const W = 1024;
@@ -132,6 +135,7 @@ export class VrPanel {
 
     let y = 110;
     y = this.drawToolSection(y);
+    y = this.drawDetailSection(y);
     y = this.drawListSection("Geschosse", y, this.storeys.groups.map((g) => ({
       label: g.name,
       checked: g.visible,
@@ -173,6 +177,27 @@ export class VrPanel {
       y += 92;
     }
     return y + 8;
+  }
+
+  private drawDetailSection(y: number): number {
+    this.sectionTitle("Detailstufe", y);
+    y += 44;
+    const current = this.cb.getDetail();
+    const levels: [string, DetailLevel][] = [
+      ["Hoch", "hoch"],
+      ["Mittel", "mittel"],
+      ["Niedrig", "niedrig"],
+    ];
+    this.buttonRow(
+      levels.map(([label, level]) => ({
+        label,
+        active: current === level,
+        action: () => this.cb.onDetail(level),
+      })),
+      36,
+      y,
+    );
+    return y + 100;
   }
 
   private drawListSection(
