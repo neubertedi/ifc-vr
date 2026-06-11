@@ -59,6 +59,12 @@ Einmal importierte Modelle werden im Browser-Speicher des Geräts abgelegt
 (IndexedDB – lokal, nichts geht ins Internet). Beim nächsten Öffnen stellt der
 Viewer das zuletzt benutzte Projekt automatisch wieder her – kein Neuimport nötig.
 
+**Ganzes Projekt in einem Rutsch auf die Quest:** Im Konverter „Alle als ZIP
+herunterladen" → das ZIP auf HiDrive legen → auf der Quest herunterladen →
+im Viewer „Modelle hinzufügen" und das ZIP auswählen. Alle Teilmodelle landen
+mit einem einzigen Import im Projekt (die Quest-Dateiauswahl kann keine
+Mehrfachauswahl – so braucht sie nur eine Datei).
+
 - **Neues Projekt** anlegen → „Modelle hinzufügen" importiert in dieses Projekt
 - **✕** entlädt ein Teilmodell aus der Szene (bleibt gespeichert, „Laden" holt es zurück)
 - **🗑** löscht es endgültig aus dem Browser-Speicher

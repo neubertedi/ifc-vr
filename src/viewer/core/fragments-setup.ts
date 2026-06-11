@@ -20,10 +20,14 @@ export class FragmentsHost {
     // Selbst gehosteter Worker statt FragmentsModels.getWorker() (lädt von unpkg)
     const workerUrl = new URL("frag-worker/worker.mjs", document.baseURI).href;
     this.fragments = new FRAGS.FragmentsModels(workerUrl);
+    // Werksseitig steht die Qualität auf 0 (niedrigste Stufe) – dann fehlen
+    // kleine/ferne Bauteile oder erscheinen stark vereinfacht.
+    this.fragments.settings.graphicsQuality = 1;
   }
 
   async load(modelId: string, buffer: ArrayBuffer): Promise<FRAGS.FragmentsModel> {
     const model = await this.fragments.load(buffer, { modelId, camera: this.camera });
+    model.graphicsQuality = 1;
     model.useCamera(this.camera);
     this.scene.add(model.object);
     await this.fragments.update(true);
@@ -40,8 +44,23 @@ export class FragmentsHost {
     return [...this.fragments.models.list.values()];
   }
 
+  private moving = false;
+
+  /**
+   * Bewegungszustand melden (VR-Lokomotion): Während der Bewegung werden
+   * Nachlade-Updates pausiert (vermeidet Mikro-Ruckler durch Worker-Uploads),
+   * beim Stehenbleiben wird sofort vollständig nachgeladen.
+   */
+  setMoving(moving: boolean): void {
+    if (this.moving && !moving) {
+      void this.forceUpdate();
+    }
+    this.moving = moving;
+  }
+
   /** Im Renderloop aufrufen – stößt gedrosselt Tile-/LOD-Updates an. */
   tick(time: number): void {
+    if (this.moving) return;
     if (this.updatePending || time - this.lastUpdate < this.updateInterval) return;
     this.lastUpdate = time;
     this.updatePending = true;

@@ -317,18 +317,28 @@ async function vrToolAction(): Promise<void> {
 };
 
 const clock = new THREE.Clock();
+const lastRigPos = new THREE.Vector3();
 renderer.setAnimationLoop((time: number) => {
   const dt = Math.min(clock.getDelta(), 0.05);
-  host.tick(time);
 
   if (renderer.xr.isPresenting) {
     locomotion.update(dt, time);
+
+    // Während der Fortbewegung Nachladen pausieren (verhindert Mikro-Ruckler);
+    // ein Sprung des Rigs (Teleport) löst sofortiges Nachladen aus.
+    const left = input.axes("left");
+    host.setMoving(Math.abs(left.x) > 0.12 || Math.abs(left.y) > 0.12);
+    if (lastRigPos.distanceToSquared(rig.position) > 1) void host.forceUpdate();
+    lastRigPos.copy(rig.position);
+
     updateVrPointer();
     handleVrButtons();
     input.latch();
   } else {
+    host.setMoving(false);
     controls.update(dt);
   }
 
+  host.tick(time);
   renderer.render(scene, camera);
 });

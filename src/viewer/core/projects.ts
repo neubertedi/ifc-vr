@@ -1,3 +1,4 @@
+import { unzipSync } from "fflate";
 import type { ModelManager } from "./models";
 
 export interface ProjectMeta {
@@ -236,7 +237,12 @@ export class ProjectManager {
     this.emit();
   }
 
-  /** Neue Dateien importieren: in IndexedDB sichern + in die Szene laden. */
+  /**
+   * Neue Dateien importieren: in IndexedDB sichern + in die Szene laden.
+   * Akzeptiert .frag direkt sowie .zip mit mehreren .frag darin – wichtig
+   * für die Quest, deren Dateiauswahl keine Mehrfachauswahl kennt:
+   * ein ZIP (z. B. vom Konverter-Knopf „Alle als ZIP") = ein Import.
+   */
   async importFiles(files: File[]): Promise<void> {
     if (!this.active) {
       const date = new Date().toLocaleDateString("de-DE");
@@ -247,14 +253,28 @@ export class ProjectManager {
       this.storedModels = [];
     }
     for (const file of files) {
-      const bytes = await file.arrayBuffer();
-      const name = file.name.replace(/\.frag$/i, "");
-      const stored = await this.store.addModel(this.active.id, name, bytes);
-      this.storedModels.push(stored);
-      const managed = await this.manager.add(file.name, bytes);
-      this.runtimeIds.set(stored.id, managed.id);
+      if (/\.zip$/i.test(file.name)) {
+        const entries = unzipSync(new Uint8Array(await file.arrayBuffer()));
+        for (const [entryName, bytes] of Object.entries(entries)) {
+          if (!entryName.toLowerCase().endsWith(".frag")) continue;
+          const name = (entryName.split("/").pop() ?? entryName).replace(/\.frag$/i, "");
+          // Eigene Kopie, damit das große ZIP-Archiv freigegeben werden kann
+          await this.importOne(name, bytes.slice().buffer);
+        }
+      } else {
+        await this.importOne(file.name.replace(/\.frag$/i, ""), await file.arrayBuffer());
+      }
     }
     this.storedModels.sort((a, b) => a.name.localeCompare(b.name, "de"));
+    this.emit();
+  }
+
+  private async importOne(name: string, bytes: ArrayBuffer): Promise<void> {
+    if (!this.active) return;
+    const stored = await this.store.addModel(this.active.id, name, bytes);
+    this.storedModels.push(stored);
+    const managed = await this.manager.add(`${name}.frag`, bytes);
+    this.runtimeIds.set(stored.id, managed.id);
     this.emit();
   }
 
