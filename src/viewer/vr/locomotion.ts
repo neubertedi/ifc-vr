@@ -137,11 +137,11 @@ export class Locomotion {
     this.teleport(time);
   }
 
-  /** A-Taste (rechts) = aufwärts, B-Taste (rechts) = abwärts schweben. */
+  /** B-Taste (rechts, oben) = aufwärts, A-Taste (rechts, unten) = abwärts. */
   private vertical(dt: number): void {
     let dir = 0;
-    if (this.input.isDown("right", 4)) dir += 1;
-    if (this.input.isDown("right", 5)) dir -= 1;
+    if (this.input.isDown("right", 5)) dir += 1;
+    if (this.input.isDown("right", 4)) dir -= 1;
     if (dir !== 0) this.rig.position.y += dir * 2 * dt;
   }
 

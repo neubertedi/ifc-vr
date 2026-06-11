@@ -45,7 +45,7 @@ nichts wird hochgeladen.
 | Bauteil-Infos | Mit rechtem Controller zielen + Trigger |
 | Menü ein/aus | X-Taste (linker Controller) – Werkzeuge, Geschosse, Teilmodelle, Eigenschaften |
 | Menü bedienen | Mit rechtem Laser zielen + Trigger |
-| Hoch/runter schweben | A-Taste / B-Taste (rechter Controller) gedrückt halten |
+| Hoch/runter schweben | B-Taste = hoch, A-Taste = runter (rechter Controller, gedrückt halten) |
 | Schnittebene setzen | Werkzeug „Schnitt" im Menü, dann linke Grip-Taste halten und Hand bewegen |
 | Auswahl aufheben | Y-Taste (linker Controller) |
 
