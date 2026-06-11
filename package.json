@@ -1,0 +1,23 @@
+{
+  "name": "ifc-vr",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "postinstall": "node scripts/copy-assets.mjs"
+  },
+  "dependencies": {
+    "@thatopen/fragments": "3.4.5",
+    "fflate": "^0.8.2",
+    "three": "0.182.0",
+    "web-ifc": "0.0.77"
+  },
+  "devDependencies": {
+    "@types/three": "0.182.0",
+    "typescript": "^5.5.0",
+    "vite": "^7.0.0"
+  }
+}

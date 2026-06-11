@@ -1,0 +1,5 @@
+node_modules/
+dist/
+# Werden bei npm install automatisch aus node_modules kopiert (scripts/copy-assets.mjs)
+public/wasm/
+public/frag-worker/
