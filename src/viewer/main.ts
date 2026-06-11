@@ -195,6 +195,8 @@ if (navigator.xr) {
 
 async function startVr(): Promise<void> {
   try {
+    // VR-Auflösung an die Detailstufe koppeln (muss vor Sitzungsstart gesetzt sein)
+    renderer.xr.setFramebufferScaleFactor(host.vrScale);
     const session = await navigator.xr!.requestSession("immersive-vr", {
       optionalFeatures: ["local-floor", "bounded-floor", "hand-tracking"],
     });

@@ -3,11 +3,37 @@ import * as THREE from "three";
 
 export type DetailLevel = "hoch" | "mittel" | "niedrig";
 
-/** Qualitätsstufe (0–1) und Grafikspeicher-Budget je Detail-Einstellung. */
-const DETAIL_PRESETS: Record<DetailLevel, { quality: number; budget: number }> = {
-  hoch: { quality: 1, budget: 640 * 1024 * 1024 },
-  mittel: { quality: 0.5, budget: 384 * 1024 * 1024 },
-  niedrig: { quality: 0.25, budget: 224 * 1024 * 1024 },
+/**
+ * Presets je Detailstufe:
+ * - lodMode ALL_GEOMETRY: alles Sichtbare in voller Geometrie (keine
+ *   Drahtgitter-Vereinfachung kleiner Teile wie Schrauben); DEFAULT nutzt
+ *   die normale Stufenlogik der Engine.
+ * - quality: Skaliert die Ausblende-Schwellen (1 = beste Darstellung).
+ * - budget: Grafikspeicher-Obergrenze (zu hoch → Grafikfehler auf der Quest).
+ * - vrScale: VR-Framebuffer-Faktor, wirkt beim nächsten VR-Start.
+ */
+const DETAIL_PRESETS: Record<
+  DetailLevel,
+  { lodMode: FRAGS.LodMode; quality: number; budget: number; vrScale: number }
+> = {
+  hoch: {
+    lodMode: FRAGS.LodMode.ALL_GEOMETRY,
+    quality: 1,
+    budget: 512 * 1024 * 1024,
+    vrScale: 0.9,
+  },
+  mittel: {
+    lodMode: FRAGS.LodMode.DEFAULT,
+    quality: 1,
+    budget: 384 * 1024 * 1024,
+    vrScale: 0.8,
+  },
+  niedrig: {
+    lodMode: FRAGS.LodMode.DEFAULT,
+    quality: 0.4,
+    budget: 256 * 1024 * 1024,
+    vrScale: 0.7,
+  },
 };
 
 const DETAIL_KEY = "ifcvr.detail";
@@ -45,12 +71,20 @@ export class FragmentsHost {
 
   detail: DetailLevel = "hoch";
 
+  /** VR-Framebuffer-Faktor der aktuellen Detailstufe (vor Sitzungsstart abfragen). */
+  get vrScale(): number {
+    return DETAIL_PRESETS[this.detail].vrScale;
+  }
+
   /** Detailstufe: Abwägung zwischen Vollständigkeit und Bildrate (pro Gerät gespeichert). */
   setDetail(level: DetailLevel): void {
     this.detail = level;
     const preset = DETAIL_PRESETS[level];
     this.fragments.settings.graphicsQuality = preset.quality;
-    for (const model of this.models) model.graphicsQuality = preset.quality;
+    for (const model of this.models) {
+      model.graphicsQuality = preset.quality;
+      void model.setLodMode(preset.lodMode);
+    }
     engineGlobals.__IFCVR_GPU_BUDGET = preset.budget;
     localStorage.setItem(DETAIL_KEY, level);
     void this.forceUpdate();
@@ -68,7 +102,9 @@ export class FragmentsHost {
 
   async load(modelId: string, buffer: ArrayBuffer): Promise<FRAGS.FragmentsModel> {
     const model = await this.fragments.load(buffer, { modelId, camera: this.camera });
-    model.graphicsQuality = DETAIL_PRESETS[this.detail].quality;
+    const preset = DETAIL_PRESETS[this.detail];
+    model.graphicsQuality = preset.quality;
+    void model.setLodMode(preset.lodMode);
     model.useCamera(this.camera);
     this.scene.add(model.object);
     await this.fragments.update(true);
