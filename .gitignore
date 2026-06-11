@@ -3,3 +3,5 @@ dist/
 # Werden bei npm install automatisch aus node_modules kopiert (scripts/copy-assets.mjs)
 public/wasm/
 public/frag-worker/
+# Logo-Quelldateien im Projektordner (verwendete Kopie liegt in public/logo-edi.png)
+logo_*.png
