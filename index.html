@@ -101,7 +101,27 @@
         padding: 0 4px;
       }
       .row .x:hover { color: var(--err); }
+      .row .mini {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--accent);
+        border-radius: 6px;
+        padding: 2px 10px;
+        cursor: pointer;
+        font-size: 0.8rem;
+      }
+      .row .mini:hover { border-color: var(--accent); }
+      .row.unloaded .grow { color: var(--muted); }
       .empty { color: var(--muted); font-size: 0.85rem; font-style: italic; }
+      #projectSelect {
+        width: 100%;
+        background: var(--panel-solid);
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 7px 10px;
+        font-size: 0.9rem;
+      }
       #props table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
       #props td { padding: 3px 6px 3px 0; vertical-align: top; word-break: break-word; }
       #props td:first-child { color: var(--muted); white-space: nowrap; max-width: 130px; overflow: hidden; text-overflow: ellipsis; }
@@ -145,8 +165,20 @@
       </header>
       <div id="sidebarBody">
         <div class="section">
+          <h2>Projekt</h2>
+          <select id="projectSelect">
+            <option value="">– kein Projekt –</option>
+          </select>
+          <div class="btnrow" style="margin-top: 8px">
+            <button class="btn secondary" id="projectNew">Neues Projekt</button>
+            <button class="btn secondary" id="projectDelete" title="Aktives Projekt löschen">Löschen</button>
+          </div>
+          <div class="empty" id="storageInfo" style="margin-top: 6px"></div>
+        </div>
+
+        <div class="section">
           <div class="btnrow">
-            <button class="btn" id="loadBtn">Modelle laden (.frag)</button>
+            <button class="btn" id="loadBtn">Modelle hinzufügen (.frag)</button>
             <input id="fragInput" type="file" accept=".frag" multiple hidden />
           </div>
         </div>

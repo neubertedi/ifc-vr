@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { createViewerScene } from "./scene";
 import { FragmentsHost } from "./core/fragments-setup";
 import { ModelManager } from "./core/models";
+import { ProjectManager } from "./core/projects";
 import { SelectionManager } from "./core/selection";
 import { StoreyFilter } from "./core/storeys";
 import { ClippingTool } from "./core/tools/clipping";
@@ -23,13 +24,17 @@ const storeys = new StoreyFilter(manager);
 const clipping = new ClippingTool(renderer, scene, manager);
 const measure = new MeasureTool(scene);
 const controls = new DesktopControls(camera, canvas);
+const projects = new ProjectManager(manager);
 
 let tool: ToolMode = "select";
 
 /* ---------- Desktop-UI ---------- */
 
-const ui = new DesktopUI(manager, storeys, {
+const ui = new DesktopUI(manager, storeys, projects, {
   onLoadFiles: (files) => void loadFiles(files),
+  onProjectOpened: () => {
+    void host.forceUpdate().then(() => controls.frameBox(modelsBox()));
+  },
   onNavMode: (mode) => controls.setMode(mode),
   onToolMode: (mode) => {
     tool = mode;
@@ -50,10 +55,7 @@ selection.onChange((rows) => {
 async function loadFiles(files: FileList): Promise<void> {
   ui.setLoading(true);
   try {
-    for (const file of Array.from(files)) {
-      const buffer = await file.arrayBuffer();
-      await manager.add(file.name, buffer);
-    }
+    await projects.importFiles(Array.from(files));
     await host.forceUpdate();
     controls.frameBox(modelsBox());
     ui.setHint("Linksklick wählt Bauteile aus – Werkzeuge links");
@@ -67,6 +69,23 @@ async function loadFiles(files: FileList): Promise<void> {
     ui.setLoading(false);
   }
 }
+
+// Beim Start: zuletzt benutztes Projekt automatisch wiederherstellen
+void (async () => {
+  ui.setLoading(true);
+  try {
+    const restored = await projects.init();
+    if (restored) {
+      await host.forceUpdate();
+      controls.frameBox(modelsBox());
+      ui.setHint(`Projekt „${restored}" wiederhergestellt`);
+    }
+  } catch (e) {
+    console.error("Projekt-Wiederherstellung fehlgeschlagen:", e);
+  } finally {
+    ui.setLoading(false);
+  }
+})();
 
 function modelsBox(): THREE.Box3 {
   const box = new THREE.Box3();
@@ -235,8 +254,8 @@ function handleVrButtons(): void {
   // X-Taste links: Menü ein/aus
   if (input.justPressed("left", 4)) panel.toggle();
 
-  // B-Taste rechts: Auswahl aufheben
-  if (input.justPressed("right", 5)) void selection.clear();
+  // Y-Taste links: Auswahl aufheben (A/B rechts sind hoch/runter)
+  if (input.justPressed("left", 5)) void selection.clear();
 
   // Trigger rechts: Panel-Klick oder Werkzeug-Aktion
   if (input.justPressed("right", 0)) {

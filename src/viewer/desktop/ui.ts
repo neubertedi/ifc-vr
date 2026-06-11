@@ -1,4 +1,5 @@
 import type { ModelManager } from "../core/models";
+import type { ProjectManager } from "../core/projects";
 import type { PropertyRow } from "../core/selection";
 import type { StoreyFilter } from "../core/storeys";
 
@@ -6,6 +7,7 @@ export type ToolMode = "select" | "measure" | "clip";
 
 export interface UiCallbacks {
   onLoadFiles: (files: FileList) => void;
+  onProjectOpened?: () => void;
   onNavMode: (mode: "orbit" | "ego") => void;
   onToolMode: (mode: ToolMode) => void;
   onClipFlip: () => void;
@@ -19,15 +21,46 @@ export class DesktopUI {
   toolMode: ToolMode = "select";
   private readonly manager: ModelManager;
   private readonly storeys: StoreyFilter;
+  private readonly projects: ProjectManager;
   private readonly cb: UiCallbacks;
 
-  constructor(manager: ModelManager, storeys: StoreyFilter, cb: UiCallbacks) {
+  constructor(
+    manager: ModelManager,
+    storeys: StoreyFilter,
+    projects: ProjectManager,
+    cb: UiCallbacks,
+  ) {
     this.manager = manager;
     this.storeys = storeys;
+    this.projects = projects;
     this.cb = cb;
 
     manager.onChange(() => this.renderModels());
     storeys.onChange(() => this.renderStoreys());
+    projects.onChange(() => {
+      this.renderProjects();
+      this.renderModels();
+    });
+
+    byId<HTMLSelectElement>("projectSelect").addEventListener("change", (e) => {
+      const id = (e.target as HTMLSelectElement).value;
+      if (id) void this.projects.openProject(id).then(() => this.cb.onProjectOpened?.());
+    });
+    byId<HTMLButtonElement>("projectNew").addEventListener("click", () => {
+      const name = prompt("Name des neuen Projekts:", "");
+      if (name?.trim()) void this.projects.createProject(name.trim());
+    });
+    byId<HTMLButtonElement>("projectDelete").addEventListener("click", () => {
+      const active = this.projects.active;
+      if (!active) return;
+      if (
+        confirm(
+          `Projekt „${active.name}" mit allen gespeicherten Teilmodellen aus dem Browser-Speicher löschen?\n(Die .frag-Dateien auf der Festplatte bleiben erhalten.)`,
+        )
+      ) {
+        void this.projects.deleteActiveProject();
+      }
+    });
 
     const loadBtn = byId<HTMLButtonElement>("loadBtn");
     const fragInput = byId<HTMLInputElement>("fragInput");
@@ -105,29 +138,80 @@ export class DesktopUI {
     });
   }
 
+  private renderProjects(): void {
+    const select = byId<HTMLSelectElement>("projectSelect");
+    select.innerHTML = "";
+    if (!this.projects.projects.length) {
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "– kein Projekt –";
+      select.appendChild(opt);
+    }
+    for (const p of this.projects.projects) {
+      const opt = document.createElement("option");
+      opt.value = p.id;
+      opt.textContent = p.name;
+      opt.selected = p.id === this.projects.active?.id;
+      select.appendChild(opt);
+    }
+    void this.projects.store.storageEstimate().then((text) => {
+      byId("storageInfo").textContent = text;
+    });
+  }
+
   private renderModels(): void {
     const el = byId("modelList");
     el.innerHTML = "";
-    if (!this.manager.models.length) {
-      el.innerHTML = `<div class="empty">Noch keine Modelle geladen.</div>`;
+    const stored = this.projects.storedModels;
+    if (!stored.length) {
+      el.innerHTML = `<div class="empty">Noch keine Modelle im Projekt.</div>`;
       return;
     }
-    for (const m of this.manager.models) {
+    for (const s of stored) {
       const row = document.createElement("div");
-      row.className = "row";
-      const check = document.createElement("input");
-      check.type = "checkbox";
-      check.checked = m.visible;
-      check.addEventListener("change", () => this.manager.setVisible(m.id, check.checked));
-      const label = document.createElement("span");
-      label.className = "grow";
-      label.textContent = m.name;
-      const remove = document.createElement("button");
-      remove.className = "x";
-      remove.title = "Teilmodell entladen";
-      remove.textContent = "✕";
-      remove.addEventListener("click", () => void this.manager.remove(m.id));
-      row.append(check, label, remove);
+      const runtimeId = this.projects.runtimeIdFor(s.id);
+      const managed = runtimeId
+        ? this.manager.models.find((m) => m.id === runtimeId)
+        : undefined;
+
+      if (managed) {
+        // Geladen: Sichtbarkeit umschalten, ✕ = entladen (bleibt gespeichert)
+        row.className = "row";
+        const check = document.createElement("input");
+        check.type = "checkbox";
+        check.checked = managed.visible;
+        check.title = "Sichtbarkeit";
+        check.addEventListener("change", () => this.manager.setVisible(managed.id, check.checked));
+        const label = document.createElement("span");
+        label.className = "grow";
+        label.textContent = s.name;
+        const unload = document.createElement("button");
+        unload.className = "x";
+        unload.title = "Entladen (bleibt im Projekt gespeichert)";
+        unload.textContent = "✕";
+        unload.addEventListener("click", () => void this.projects.unloadStored(s.id));
+        row.append(check, label, unload);
+      } else {
+        // Gespeichert, aber nicht geladen
+        row.className = "row unloaded";
+        const load = document.createElement("button");
+        load.className = "mini";
+        load.textContent = "Laden";
+        load.addEventListener("click", () => void this.projects.loadStored(s.id));
+        const label = document.createElement("span");
+        label.className = "grow";
+        label.textContent = `${s.name} (${Math.max(1, Math.round(s.size / 1024 / 1024))} MB)`;
+        const del = document.createElement("button");
+        del.className = "x";
+        del.title = "Endgültig aus dem Projekt löschen";
+        del.textContent = "🗑";
+        del.addEventListener("click", () => {
+          if (confirm(`„${s.name}" endgültig aus dem Projekt löschen?`)) {
+            void this.projects.deleteStored(s.id);
+          }
+        });
+        row.append(load, label, del);
+      }
       el.appendChild(row);
     }
   }

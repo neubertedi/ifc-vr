@@ -45,12 +45,24 @@ nichts wird hochgeladen.
 | Bauteil-Infos | Mit rechtem Controller zielen + Trigger |
 | Menü ein/aus | X-Taste (linker Controller) – Werkzeuge, Geschosse, Teilmodelle, Eigenschaften |
 | Menü bedienen | Mit rechtem Laser zielen + Trigger |
+| Hoch/runter schweben | A-Taste / B-Taste (rechter Controller) gedrückt halten |
 | Schnittebene setzen | Werkzeug „Schnitt" im Menü, dann linke Grip-Taste halten und Hand bewegen |
-| Auswahl aufheben | B-Taste (rechter Controller) |
+| Auswahl aufheben | Y-Taste (linker Controller) |
 
 **Tipp für große Projekte (z. B. 25 Teilmodelle):** Nicht alle auf einmal laden –
 nur die Gewerke, die gerade gebraucht werden. Nachladen/Entladen geht jederzeit,
 auch mitten in der VR-Sitzung über das Menü.
+
+### Projekte (dauerhaft gespeichert)
+
+Einmal importierte Modelle werden im Browser-Speicher des Geräts abgelegt
+(IndexedDB – lokal, nichts geht ins Internet). Beim nächsten Öffnen stellt der
+Viewer das zuletzt benutzte Projekt automatisch wieder her – kein Neuimport nötig.
+
+- **Neues Projekt** anlegen → „Modelle hinzufügen" importiert in dieses Projekt
+- **✕** entlädt ein Teilmodell aus der Szene (bleibt gespeichert, „Laden" holt es zurück)
+- **🗑** löscht es endgültig aus dem Browser-Speicher
+- Gespeichert wird **pro Gerät und Browser** – die Quest hat also ihre eigenen Projekte
 
 ## Entwicklung
 
