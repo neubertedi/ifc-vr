@@ -31,7 +31,8 @@ nichts wird hochgeladen.
 | Durchlaufen | „Begehen (WASD)" → Klick ins Bild, dann WASD + Maus, Umschalt = schneller, E/Q = hoch/runter, Esc = Maus freigeben |
 | Bauteil-Infos | Werkzeug „Auswählen" → Bauteil anklicken |
 | Messen | Werkzeug „Messen" → zwei Punkte anklicken |
-| Schnitt | Werkzeug „Schnitt" → auf eine Fläche klicken („Umkehren"/„Schnitt aus" darunter) |
+| Schnitt | Werkzeug „Schnitt" → auf eine Fläche klicken; Mausrad verschiebt die Ebene (Umschalt = fein), „Umkehren"/„Schnitt aus" darunter |
+| Drehpunkt | Angeklickter Punkt wird automatisch neues Orbit-Zentrum |
 | Geschosse/Teilmodelle | Häkchen in der Seitenleiste |
 
 ### VR (Meta Quest 3)

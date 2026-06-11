@@ -14,6 +14,8 @@ export class DesktopControls {
   private readonly pointerLock: PointerLockControls;
   private readonly camera: THREE.PerspectiveCamera;
   private readonly keys = new Set<string>();
+  /** Ziel für sanftes Umsetzen des Orbit-Drehpunkts (angeklickter Punkt). */
+  private pivotGoal: THREE.Vector3 | null = null;
 
   constructor(camera: THREE.PerspectiveCamera, canvas: HTMLCanvasElement) {
     this.camera = camera;
@@ -46,6 +48,12 @@ export class DesktopControls {
     }
   }
 
+  /** Angeklickten Punkt zum Orbit-Drehpunkt machen (sanft übergeblendet). */
+  setPivot(point: THREE.Vector3): void {
+    if (this.mode !== "orbit") return;
+    this.pivotGoal = point.clone();
+  }
+
   /** Bei Modellwechsel: Kamera sinnvoll vor das Modell stellen. */
   frameBox(box: THREE.Box3): void {
     if (box.isEmpty()) return;
@@ -59,6 +67,10 @@ export class DesktopControls {
 
   update(dt: number): void {
     if (this.mode === "orbit") {
+      if (this.pivotGoal) {
+        this.orbit.target.lerp(this.pivotGoal, 1 - Math.exp(-8 * dt));
+        if (this.orbit.target.distanceToSquared(this.pivotGoal) < 1e-6) this.pivotGoal = null;
+      }
       this.orbit.update();
       return;
     }

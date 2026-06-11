@@ -68,7 +68,7 @@ export class DesktopUI {
     const hints: Record<ToolMode, string> = {
       select: "Bauteil anklicken für Eigenschaften",
       measure: "Zwei Punkte anklicken zum Messen",
-      clip: "Auf eine Fläche klicken, um dort zu schneiden",
+      clip: "Auf Fläche klicken = schneiden · Mausrad = Ebene verschieben (Umschalt = fein)",
     };
     this.setHint(hints[mode]);
     this.cb.onToolMode(mode);

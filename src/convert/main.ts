@@ -105,9 +105,17 @@ async function addFiles(files: FileList | File[]): Promise<void> {
       // ZIP im Browser entpacken – kann ein oder mehrere IFCs enthalten
       try {
         const entries = unzipSync(new Uint8Array(await file.arrayBuffer()));
-        for (const [entryName, bytes] of Object.entries(entries)) {
-          if (!entryName.toLowerCase().endsWith(".ifc")) continue;
-          enqueue(baseName(entryName.split("/").pop() ?? entryName), bytes);
+        const ifcEntries = Object.entries(entries).filter(([n]) =>
+          n.toLowerCase().endsWith(".ifc"),
+        );
+        if (ifcEntries.length === 1) {
+          // IFCZIP enthält meist genau eine, oft generisch benannte Datei
+          // (z. B. "ISO-10303-21.ifc") → äußerer Dateiname ist der richtige
+          enqueue(baseName(file.name), ifcEntries[0][1]);
+        } else {
+          for (const [entryName, bytes] of ifcEntries) {
+            enqueue(baseName(entryName.split("/").pop() ?? entryName), bytes);
+          }
         }
       } catch (e) {
         const job: Job = {

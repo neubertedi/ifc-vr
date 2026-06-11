@@ -97,10 +97,14 @@ canvas.addEventListener("pointerup", (e) => {
 async function handlePick(mouse: THREE.Vector2): Promise<void> {
   if (tool === "measure") {
     const hit = await selection.pickSnapped(camera, mouse, canvas);
-    if (hit) measure.addPoint(hit.point);
+    if (hit) {
+      measure.addPoint(hit.point);
+      controls.setPivot(hit.point);
+    }
     return;
   }
   const hit = await selection.pick(camera, mouse, canvas);
+  if (hit) controls.setPivot(hit.point); // angeklickter Punkt wird Orbit-Drehpunkt
   if (tool === "clip") {
     if (hit) clipping.setFromPointAndNormal(hit.point, hit.normal ?? new THREE.Vector3(0, 1, 0));
     return;
@@ -108,6 +112,21 @@ async function handlePick(mouse: THREE.Vector2): Promise<void> {
   if (hit) await selection.select(hit.fragments, hit.localId);
   else await selection.clear();
 }
+
+// Mausrad verschiebt die Schnittebene, solange das Schnitt-Werkzeug aktiv ist
+// (capture-Phase, damit OrbitControls währenddessen nicht zoomt)
+window.addEventListener(
+  "wheel",
+  (e) => {
+    if (tool !== "clip" || !clipping.enabled || renderer.xr.isPresenting) return;
+    if (e.target !== canvas) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    const step = e.shiftKey ? 0.02 : 0.15;
+    clipping.translate(e.deltaY < 0 ? step : -step);
+  },
+  { capture: true, passive: false },
+);
 
 /* ---------- VR ---------- */
 
@@ -273,6 +292,7 @@ async function vrToolAction(): Promise<void> {
   camera,
   clipping,
   measure,
+  controls,
   THREE,
   pick: (x: number, y: number) => handlePick(new THREE.Vector2(x, y)),
 };

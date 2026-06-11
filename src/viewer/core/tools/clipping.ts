@@ -54,6 +54,14 @@ export class ClippingTool {
     this.helper.rotateY(Math.PI);
   }
 
+  /** Ebene um `distance` Meter entlang ihrer Normalen verschieben. */
+  translate(distance: number): void {
+    if (!this.enabled) return;
+    // Ebene: n·p + c = 0 – Verschiebung in Normalenrichtung um d ⇒ c -= d
+    this.plane.constant -= distance;
+    this.helper.position.addScaledVector(this.plane.normal, distance);
+  }
+
   setEnabled(enabled: boolean): void {
     this.enabled = enabled;
     this.renderer.clippingPlanes = enabled ? [this.plane] : [];
